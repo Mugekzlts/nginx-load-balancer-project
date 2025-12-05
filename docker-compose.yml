@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # 1. Mavi Site
+  site-blue:
+    image: nginx:alpine
+    container_name: site-blue
+    volumes:
+      - ./site-blue:/usr/share/nginx/html
+    networks:
+      - traffic-net
+
+  # 2. Yeşil Site
+  site-green:
+    image: nginx:alpine
+    container_name: site-green
+    volumes:
+      - ./site-green:/usr/share/nginx/html
+    networks:
+      - traffic-net
+
+  # 3. Load Balancer
+  load-balancer:
+    image: nginx:alpine
+    container_name: load-balancer
+    ports:
+      - "8080:80"
+    volumes:
+      - ./nginx-conf/nginx.conf:/etc/nginx/nginx.conf:ro
+    networks:
+      - traffic-net
+    depends_on:
+      - site-blue
+      - site-green
+
+  # 4. Log İzleme Paneli (Dozzle) - YENİ EKLENEN KISIM
+  dozzle:
+    image: amir20/dozzle:latest
+    container_name: log-dashboard
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    ports:
+      - "8888:8080"
+    networks:
+      - traffic-net
+
+# 5. Ağ Tanımlaması
+networks:
+  traffic-net:
+    driver: bridge
